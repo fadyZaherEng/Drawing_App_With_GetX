@@ -20,6 +20,7 @@ class _DrawState extends State<Draw> {
   StrokeCap strokeCap = (Platform.isAndroid) ? StrokeCap.butt : StrokeCap.round;
   SelectedMode selectedMode = SelectedMode.StrokeWidth;
   List<DrawingPoints?> points = [];
+  List<DrawingPoints?> historyPoints = [];
   List<Color> colors = [
     Colors.tealAccent,
     Colors.white,
@@ -33,19 +34,50 @@ class _DrawState extends State<Draw> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   actions: [
-      //     Padding(
-      //       padding: const EdgeInsets.all(10.0),
-      //       child: IconButton(
-      //           onPressed: () {
-      //             brush = !brush;
-      //           },
-      //           icon: const Icon(Icons.brush_outlined,size: 40,color: Colors.white,)),
-      //     ),
-      //   ],
-      // ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (points.isNotEmpty) {
+                            points.removeLast();
+                          }
+                        });
+                      },
+                      icon: Icon(
+                        Icons.undo,
+                        color: selectedColor,
+                        size: 30,
+                      )),
+                  IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (points.length < historyPoints.length) {
+                            int idx = points.length;
+                            points.add(historyPoints[idx]);
+                          }
+                        });
+                      },
+                      icon: Icon(
+                        Icons.redo,
+                        color: selectedColor,
+                        size: 30,
+                      )),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8),
         child: Container(
@@ -95,6 +127,7 @@ class _DrawState extends State<Draw> {
                           setState(() {
                             showBottomList = false;
                             points.clear();
+                            historyPoints.clear();
                           });
                         }),
                   ],
@@ -143,9 +176,10 @@ class _DrawState extends State<Draw> {
                       paint: Paint()
                         ..strokeCap = strokeCap
                         ..isAntiAlias = true
-                        ..color =  HexColor('00028')
+                        ..color = HexColor('00028')
                         ..strokeWidth = strokeWidth),
                 );
+                historyPoints = List.of(points);
               } else {
                 points.add(
                   DrawingPoints(
@@ -156,6 +190,7 @@ class _DrawState extends State<Draw> {
                         ..color = selectedColor.withOpacity(opacity)
                         ..strokeWidth = strokeWidth),
                 );
+                historyPoints = List.of(points);
               }
             },
           );
@@ -175,6 +210,7 @@ class _DrawState extends State<Draw> {
         onPanEnd: (details) {
           setState(() {
             points.add(null);
+            historyPoints.add(null);
           });
         },
         child: CustomPaint(
